@@ -1,0 +1,35 @@
+# Placeholder files for directories needed to be inside git but empty
+!*.gitkeep
+
+# JetBrains - project settings
+/.idea/
+*.log
+*~
+/.sass-cache/
+/.qa/
+
+# OS or Editor folders
+.cache
+.DS_Store
+.rsync_cache
+.vagrant
+Thumbs.db
+
+# Cache and log files
+/app/*\.cache
+/app/cache/*
+/app/logs/*
+
+# Generated files, vendor libraries
+/web/bundles/
+
+/bin/behat
+/bin/doctrine*
+/bin/phpspec
+/bin/webunit
+/vendor/*
+
+/composer.phar
+/composer.lock
+
+atlassian-ide-plugin.xml
