@@ -11,9 +11,9 @@ class NPathComplexity
     public function example()
     {
         $request   = $this->getRequest();
-        $username  = $request->has('username')  ? $request->get('username') : null;   // 5
-        $firstName = $request->has('firstname') ? $request->get('firstname') : null;  // 5
-        $lastName  = $request->has('lastname')  ? $request->get('lastname') : null;   // 5
+        $username  = $this->getOrNull($request, 'username');
+        $firstName = $this->getOrNull($request, 'firstname');
+        $lastName  = $this->getOrNull($request, 'lastname');
 
         if (trim($username) == '' || $username == null) {                             // 3
             throw new \RuntimeException('Username must not be empty');
@@ -24,5 +24,10 @@ class NPathComplexity
         $user->setFirstName($firstName);
         $user->setLastName($lastName);
         // ...
+    }
+
+    private function getOrNull($request, $input)
+    {
+        return $request->has($input) ? $request->get($input) : null;
     }
 }
