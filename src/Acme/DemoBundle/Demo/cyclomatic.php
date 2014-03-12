@@ -2,8 +2,8 @@
 /**
  * Class Foo
  *
- * @author Jörn Wagner <joern.wagner@explicatis.com>
- * @SuppressWarnings(PHPMD.ShortVariable) 
+ * @author JÃ¶rn Wagner <joern.wagner@explicatis.com>
+ * @SuppressWarnings(PHPMD.ShortVariable)
  */
 class Foo
 {

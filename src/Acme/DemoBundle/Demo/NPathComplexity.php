@@ -2,7 +2,7 @@
 /**
  * Class NPathComplexity
  *
- * @author Jörn Wagner <joern.wagner@explicatis.com>
+ * @author JÃ¶rn Wagner <joern.wagner@explicatis.com>
  */
 namespace Acme\DemoBundle\Demo;
 
