@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Wissensdurst" default="test-and-qa">
+    <property name="builddir" value="./build" override="true" />
+    <property name="sourcedir" value="src" override="true" />
+    <property name="excludesource" value="bin" override="true" />
+
+    <target name="cc">
+        <phingcall target="clearCache"/>
+    </target>
+
+    <target name="clearCache">
+        <delete dir="app/cache/dev"/>
+        <delete dir="app/cache/prod"/>
+    </target>
+
+    <target name="clearCacheTest">
+        <delete dir="app/cache/test"/>
+    </target>
+
+    <target name="testJs">
+        <echo level="error" message="=== The target is called testJS! Please mind the casing. ==="/>
+        <phingcall target="testJS"/>
+    </target>
+
+    <target name="testJS">
+        <exec command="jsl" returnProperty="jslintExists"/>
+        <if>
+            <equals arg1="${jslintExists}" arg2="1"/>
+            <then>
+                <fail
+                    message="JavaScript Lint not installed or not in PATH! See http://www.javascriptlint.com/download.htm"/>
+            </then>
+        </if>
+        <jsllint conffile="app/config/jslint.conf" haltonfailure="true">
+            <fileset dir="web/js/app">
+                <include name="**/*.js"/>
+            </fileset>
+        </jsllint>
+    </target>
+
+    <target name="test">
+        <phingcall target="clearCacheTest"/>
+        <delete file="app/logs/test.log"/>
+        <exec command="phpunit -v --debug -c app" passthru="true" checkreturn="true"/>
+    </target>
+
+    <!--The following targets use the PHP QA tools for generating code metrics and test coverages-->
+    <target name="qa-tools" depends="qa-prepare,qa-lint,qa-pdepend,qa-phpmd-ci,qa-phpcs-ci,qa-phpcpd,qa-phpcb,qa-jshint"/>
+
+    <target name="qa-clean" description="Cleanup build artifacts">
+        <delete dir="${builddir}/api"/>
+        <delete dir="${builddir}/code-browser"/>
+        <delete dir="${builddir}/pdepend"/>
+    </target>
+
+    <target name="qa-prepare" depends="qa-clean" description="Prepare for build">
+        <mkdir dir="${builddir}/api"/>
+        <mkdir dir="${builddir}/code-browser"/>
+        <mkdir dir="${builddir}/coverage"/>
+        <mkdir dir="${builddir}/logs"/>
+        <mkdir dir="${builddir}/pdepend"/>
+    </target>
+
+    <target name="qa-lint" description="Perform syntax check of sourcecode files">
+        <phplint>
+            <fileset dir="${sourcedir}">
+                <include name="**/*.php"/>
+            </fileset>
+        </phplint>
+    </target>
+
+    <target name="qa-phploc" description="Measure project size using phploc">
+        <exec executable="phploc" checkreturn="true">
+            <arg value="--log-csv" />
+            <arg value="${builddir}/logs/phploc.csv" />
+            <arg value="--exclude" />
+            <arg value="/Entity/" />
+            <arg path="${sourcedir}" />
+        </exec>
+    </target>
+
+    <target name="qa-pdepend" description="Calculate software metrics using PHP_Depend">
+        <exec executable="pdepend">
+            <arg value="--jdepend-xml=${builddir}/logs/jdepend.xml" />
+            <arg value="--jdepend-chart=${builddir}/pdepend/dependencies.svg" />
+            <arg value="--overview-pyramid=${builddir}/pdepend/overview-pyramid.svg" />
+            <arg value="--ignore=${excludesource}" />
+            <arg path="${sourcedir}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpmd" description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing.">
+        <exec executable="phpmd">
+            <arg path="${sourcedir}" />
+            <arg value="text" />
+            <arg value="app/phpmd.xml" />
+            <arg value="--exclude" />
+            <arg value="${excludesource}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpmd-ci" description="Perform project mess detection using PHPMD creating a log file for the continuous integration server">
+        <exec executable="phpmd">
+            <arg path="${sourcedir}" />
+            <arg value="xml" />
+            <arg value="app/phpmd.xml" />
+            <arg value="--reportfile" />
+            <arg value="${builddir}/logs/pmd.xml" />
+            <arg value="--exclude" />
+            <arg value="${excludesource}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpcs" description="Find coding standard violations using PHP_CodeSniffer and print human readable output. Intended for usage on the command line before committing.">
+        <exec executable="phpcs" checkreturn="true" logoutput="true">
+            <arg value="-p" /> <!-- show progress -->
+            <arg value="--standard=PSR2" />
+            <arg value="--ignore=${excludesource}" />
+            <arg path="${sourcedir}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpcs-ci" description="Find coding standard violations using PHP_CodeSniffer creating a log file for the continuous integration server">
+        <exec executable="phpcs">
+            <arg value="--report=checkstyle" />
+            <arg value="--report-file=${builddir}/logs/checkstyle.xml" />
+            <arg value="--standard=PSR2" />
+            <arg value="--ignore=${excludesource}" />
+            <arg path="${sourcedir}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpcpd" description="Find duplicate code using phpcpd">
+        <exec executable="phpcpd">
+            <arg value="--log-pmd" />
+            <arg value="${builddir}/logs/pmd-cpd.xml" />
+            <arg path="${sourcedir}" />
+        </exec>
+    </target>
+
+    <target name="qa-phpunit" description="Run unit tests with PHPUnit">
+        <exec command="phpunit -c app" dir="${sourcedir}" checkreturn="true" />
+    </target>
+
+    <target name="qa-phpcb" description="Aggregate tool output with PHP_CodeBrowser">
+        <exec executable="phpcb">
+            <arg value="--log" />
+            <arg path="${builddir}/logs" />
+            <arg value="--source" />
+            <arg path="${sourcedir}" />
+            <arg value="--output" />
+            <arg path="${builddir}/code-browser" />
+        </exec>
+    </target>
+
+    <target name="qa-jshint" description="Checks JavaScript coding standard adherence">
+        <exec command="jshint --reporter=jslint web/js > ${builddir}/logs/jshint.xml" passthru="true"/>
+    </target>
+
+    <target name="test-and-qa" depends="test, qa-tools" description="Execute tests and PHP QA tools"/>
+
+</project>
