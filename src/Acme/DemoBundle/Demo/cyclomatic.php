@@ -31,7 +31,7 @@ class Foo
             }
         } else {
             switch ($a) {
-               case 1:         // 8
+                case 1:         // 8
                     fiddle();
                     break;
                 case 2:         // 9
